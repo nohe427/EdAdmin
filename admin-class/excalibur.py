@@ -27,9 +27,9 @@ class agolAdmin(object):
         self.__portalUrl = self.__pref+self.__urlKey
         self.__userDict = self.__userDictMethod()
         self.__roleDict = self.__roleDictMethod()
-##        self.__proDict = self.__proDictMethod()
-##        self.__creditDict = self.__creditDictMethod()
-##        self.__groupDict = self.__orgGroupMethod()
+        self.__proDict = self.__proDictMethod()
+        self.__creditDict = self.__creditDictMethod()
+        self.__groupDict = self.__orgGroupMethod()
 
 
     #assigns Variables to names
@@ -69,21 +69,22 @@ class agolAdmin(object):
     def roleDict(self):
         return self.__roleDict
 
-##    @property
-##    def proDict(self):
-##        return self.__proDict
-##    @property
-##    def creditDict(self):
-##        return self.__creditDict
-##    @property
-##    def groupDict(self):
-##        return self.__groupDict
+    @property
+    def proDict(self):
+        return self.__proDict
+    @property
+    def creditDict(self):
+        return self.__creditDict
+    @property
+    def groupDict(self):
+        return self.__groupDict
 #----------------------------------------------------Account Information -----------------------------------------------
     #generates token
     def __getToken(self,adminUser, pw):
         data = {'username': adminUser,
             'password': pw,
             'referer' : 'https://www.arcgis.com',
+            'expiration': '432000',
             'f': 'json'}
         url  = 'https://arcgis.com/sharing/rest/generateToken'
         jres = requests.post(url, data=data, verify=False).json()
@@ -114,7 +115,7 @@ class agolAdmin(object):
     def __userDictMethod(self):
 
         start = 1
-        number = 50
+        number = 200
         #retreive information of all users in organization
         userDict = []
         while start != -1:
@@ -126,39 +127,40 @@ class agolAdmin(object):
                 userDict.append(row)
             start =jres['nextStart']
         return userDict
-##    def __orgGroupMethod(self):
-##        start = 1
-##        number = 50
-##        #retreive information of all users in organization
-##        groupDict = []
-##        while start != -1:
-##            groupURL =self.portalUrl+'.maps.arcgis.com/sharing/rest/community/groups?q=orgid%3A'+self.orgID+'&start='+str(start)+'&num='+str(number)+'&f=json&token='+self.token
-##            response = requests.get(groupURL, verify = False)
-##            jres = json.loads(response.text)
-##            for row in jres['results']:
-##                groupDict.append(row)
-##            start =jres['nextStart']
-##        return groupDict
-##
-##    #Creates dictionary with users level of pro licensing
-##    def __proDictMethod(self):
-##        url = '{}.maps.arcgis.com/sharing/rest/content/listings/2d2a9c99bb2a43548c31cd8e32217af6/userEntitlements'.format(self.portalUrl)
-##        request = url +"?f=json&token="+self.token
-##        response = requests.get(request, verify=False)
-##        jres = json.loads(response.text)
-##        return jres
-##
-##    def __creditDictMethod(self):
-##        startTime =int(time.time()) -2629743
-##        EndTime = int(time.time())
-##        str_ST = str(startTime) + '000'
-##        str_ET =str(EndTime) + '000'
-##        creditURL =self.__pref+'www.arcgis.com/sharing/rest/portals/{}/usage?'.format(self.orgID)
-##        request ="f=json&startTime="+str_ST+"&endTime="+str_ET+"&period=1d&vars=credits%2Cbw%2Cnum%2Cstg&groupby=username&token=" +self.token
-##        req = creditURL+request
-##        response = requests.get(req, verify = False)
-##        jres = json.loads(response.text)
-##        return jres
+    def __orgGroupMethod(self):
+        start = 1
+        number = 50
+        #retreive information of all users in organization
+        groupDict = []
+        while start != -1:
+            groupURL =self.portalUrl+'.maps.arcgis.com/sharing/rest/community/groups?q=orgid%3A'+self.orgID+'&start='+str(start)+'&num='+str(number)+'&f=json&token='+self.token
+            response = requests.get(groupURL, verify = False)
+            jres = json.loads(response.text)
+            for row in jres['results']:
+                groupDict.append(row)
+            start =jres['nextStart']
+        return groupDict
+
+    #Creates dictionary with users level of pro licensing
+    def __proDictMethod(self):
+        url = '{}.maps.arcgis.com/sharing/rest/content/listings/2d2a9c99bb2a43548c31cd8e32217af6/userEntitlements'.format(self.portalUrl)
+        request = url +"?f=json&token="+self.token
+        response = requests.get(request, verify=False)
+        jres = json.loads(response.text)
+        return jres
+
+    def __creditDictMethod(self):
+    #queries non -service based credits for the past month
+        startTime =int(time.time()) -2629743
+        EndTime = int(time.time())
+        str_ST = str(startTime) + '000'
+        str_ET =str(EndTime) + '000'
+        creditURL =self.__pref+'www.arcgis.com/sharing/rest/portals/{}/usage?'.format(self.orgID)
+        request ="f=json&startTime="+str_ST+"&endTime="+str_ET+"&period=1d&vars=credits%2Cbw%2Cnum%2Cstg&groupby=username&token=" +self.token
+        req = creditURL+request
+        response = requests.get(req, verify = False)
+        jres = json.loads(response.text)
+        return jres
 
 #------------------------------Assign Values and IDs for input -----------------------------------------------
     #Assign a name or ID for a user role
@@ -228,9 +230,6 @@ class agolAdmin(object):
         if password:
             data['password'] = password
         print data
-
-
-
         response = requests.post(userURL, data=data, verify=False).json()
 
 
@@ -263,7 +262,7 @@ class agolAdmin(object):
                         '''delete protected data'''
                         unprotectURL = '{}.maps.arcgis.com/sharing/rest/content/users/{}/items/{}/unprotect'.format(self.portalUrl,userName,itemID)
                         data = {'f':'json', 'token':self.token}
-                        response = requests.post(unprotectURL,data=data, verify = False)
+
                         delURL = '{}.maps.arcgis.com/sharing/rest/content/users/{}/items/{}/delete'.format(self.portalUrl,userName,itemID)
                         try:
                           response = requests.post(delURL,data=data, verify = False)
@@ -311,6 +310,7 @@ class agolAdmin(object):
                                 except Exception as e:
                                     print("Exception {0}. Item may already be deleted...\n".format(e))
 
+
                             else:
                                 print "Cannot delete item id {} located in folder {} because it is protected; the user will not be deleted.".format(item['id'], folderID)
                         else:
@@ -318,16 +318,13 @@ class agolAdmin(object):
                             if item['ownerFolder']:
                                 delURL = '{}.maps.arcgis.com/sharing/rest/content/users/{}/{}/items/{}/delete'.format(self.portalUrl,userName,folderID,itemID)
                                 data = {'f':'json', 'token':self.token}
-                                try:
-                                    response = requests.post(delURL,data=data, verify = False).json()
-                                except Exception as e:
-                                    print("Exception {0}. Item may already be deleted...\n".format(e))
+                                response = requests.post(delURL,data=data, verify = False).json()
 
                 #delete the folder
                 try:
                     folderURL = '{}.maps.arcgis.com/sharing/rest/content/users/{}/{}/delete'.format(self.portalUrl,userName,folderID)
                     data = {'f':'json','token':self.token}
-                    response = requests.post(folderURL,data=data, verify = False)
+                    response = requests.post(folderURL,data=data, verify = False).json()
                     print "Folder {} has been deleted.".format(folderID)
 
                 except KeyError:
@@ -371,93 +368,93 @@ class agolAdmin(object):
             print 'user was not deleted'
 
 #---------------------------Administrative Organization tasks------------------------------------------------------------------------
-##    #creates a role and assigns privleges
-##    def createRole(self,roleName,description,privs):
-##       roleURL = '{}.maps.arcgis.com/sharing/rest/portals/self/createRole'.format(self.portalUrl)
-##       roleData= {'name':roleName, 'description':description, 'f':'json', 'token':self.token}
-##       jres = requests.post(roleURL, data = roleData, verify = False).json()
-##       privileges = '{"privileges":'+str(privs) + "}"
-##
-##       #Assign Privleges to roles
-##       privURL = '{}.maps.arcgis.com/sharing/rest/portals/self/roles/{}/setPrivileges'.format(self.portalUrl, jres['id'])
-##       privData = {'id':jres['id'], 'privileges':privileges, 'f':'json', 'token':self.token}
-##       pres =requests.post(privURL, data = privData, verify=False).json()
-##
-##    #define how many users can be
-##    def __availableInvites(self):
-##        URL ='{}.maps.arcgis.com/sharing/rest/portals/self/users?start=1&num=1&f=json&token='.format(self.portalUrl)+self.token
-##        response = requests.get(URL)
-##        jres = json.loads(response.text)
-##        actUser=jres['total']
-##        if actUser<self.maxUser:
-##            invite = True
-##        else:
-##            invite=False
-##        return invite
-##
-##    def inviteUsers(self, userName,roleID, userFullName):
-##        invite=self.__availableInvites()
-##        if invite ==True:
-##            #invite users from spreadsheet
-##            url = '{}.maps.arcgis.com/sharing/rest/portals/self/invite'.format(self.portalUrl)
-##            #subject and text for email
-##            subject = 'An invitation to join an ArcGIS Online Organization, ' + self.orgName + '. DO NOT REPLY'
-##            text = '<html><body><p>' + self.fullName+ ' has invited you to join an ArcGIS Online Organization, ' +self.orgName + '. Please click this link to join:<br><a href="https://www.arcgis.com/home/signin.html?invitation=@@invitation.id@@">https://www.arcgis.com/home/signin.html?invitation=@@invitation.id@@</a></p><p>If you have difficulty signing in, please email your administrator at '+ self.adminEmail+ '. Be sure to include a description of the problem, your username, the error message, and a screenshot.</p><p>For your reference, you can access the home page of the organization here: <br>http://'+self.urlKey +'.maps.arcgis.com/home/</p><p>This link will expire in two weeks.</p><p style="color:gray;">This is an automated email, please do not reply.</p></body></html>'
-##
-##            #send invitation without sending an email notification to user
-##            invitationlist = '{"invitations":[{"username":"'+userName+'", "password":"Password123", "fullname":'+userFullName+',"email":"'+self.adminEmail+'","role":"' +roleID +'"}]}'
-##            data={'subject':subject, 'html':text, 'invitationlist':invitationlist,'f':'json', 'token':self.token}
-##            jres = requests.post(url, data=data, verify=False).json()
-##            return 'success'
-##        else:
-##            return 'error: All invitations have been used'
-##
-##    #creates a Group
-##    def createGroup(self, title, tags, description, access, viewOnly):
-##        url = self.portalUrl+'.maps.arcgis.com/sharing/rest/community/createGroup'
-##        data = {'title': title, 'tags':tags, 'description': description,'access': access, 'isViewOnly':viewOnly, 'f':'json', 'token':self.token}
-##        jres = requests.post(url, data=data, verify = False).json()
-##        return jres
-##    #shares item with Group
-##    def shareGroup(self, itemId, groupId):
-##        url = self.portalUrl+'.maps.arcgis.com/sharing/rest/content/items/{}/share'.format(itemId)
-##        data = {'groups':groupId, 'f':'json', 'token':self.token}
-##        jres = requests.post(url, data=data, verify = False)
-##    def addUserToGroup(self, userlist, groupId):
-##        url = self.portalUrl+'.maps.arcgis.com/sharing/rest/community/groups/{}/addUsers'.format(groupId)
-##        data ={'users':userlist, 'f':'json','token':self.token}
-##        jres = requests.post(url, data=data, verify = False)
-##
-##    #sets feature group, but more parameters can be added
-##    def updateOrgAdmin(self, groupId):
-##        url = self.portalUrl+'.maps.arcgis.com/sharing/rest/portals/self/update'
-##        data= {'homePageFeaturedContent':groupId,'f':'json', 'token':self.token}
-##        jres = requests.post(url, data=data, verify = False)
-##
-###-----------------------------------------------User analysis-----------------------------------------
-####    def countFeatures(self, userName):
-####        itemURL ='{}.maps.arcgis.com/sharing/rest/content/users/{}'.format(self.portalUrl, userName)
-####        request = itemURL +"?f=json&token="+self.token
-####        response = requests.get(request)
-####        jres = json.loads(response.text)
-####        num = 0
-####        for item in jres['items']:
-####             if item['type'] == 'Feature Service':
-####                for x in item['typeKeywords']:
-####                    if x=='Hosted Service':
-####                        num +=1
-####        return num
-##
-##    def userCredit(self,userName):
-##        creds = 0
-##        for item in self.creditDict['data']:
-##            try:
-##                if userName == item['username']:
-##                    for x in item['credits']:
-##                        creds += float(x[1])
-##            except KeyError:
-##                pass
-##        return creds
-##
+    #creates a role and assigns privleges
+    def createRole(self,roleName,description,privs):
+       roleURL = '{}.maps.arcgis.com/sharing/rest/portals/self/createRole'.format(self.portalUrl)
+       roleData= {'name':roleName, 'description':description, 'f':'json', 'token':self.token}
+       jres = requests.post(roleURL, data = roleData, verify = False).json()
+       privileges = '{"privileges":'+str(privs) + "}"
+
+       #Assign Privleges to roles
+       privURL = '{}.maps.arcgis.com/sharing/rest/portals/self/roles/{}/setPrivileges'.format(self.portalUrl, jres['id'])
+       privData = {'id':jres['id'], 'privileges':privileges, 'f':'json', 'token':self.token}
+       pres =requests.post(privURL, data = privData, verify=False).json()
+
+    #define how many users can be
+    def __availableInvites(self):
+        URL ='{}.maps.arcgis.com/sharing/rest/portals/self/users?start=1&num=1&f=json&token='.format(self.portalUrl)+self.token
+        response = requests.get(URL)
+        jres = json.loads(response.text)
+        actUser=jres['total']
+        if actUser<self.maxUser:
+            invite = True
+        else:
+            invite=False
+        return invite
+
+    def inviteUsers(self, userName,roleID, userFullName):
+        invite=self.__availableInvites()
+        if invite ==True:
+            #invite users from spreadsheet
+            url = '{}.maps.arcgis.com/sharing/rest/portals/self/invite'.format(self.portalUrl)
+            #subject and text for email
+            subject = 'An invitation to join an ArcGIS Online Organization, ' + self.orgName + '. DO NOT REPLY'
+            text = '<html><body><p>' + self.fullName+ ' has invited you to join an ArcGIS Online Organization, ' +self.orgName + '. Please click this link to join:<br><a href="https://www.arcgis.com/home/signin.html?invitation=@@invitation.id@@">https://www.arcgis.com/home/signin.html?invitation=@@invitation.id@@</a></p><p>If you have difficulty signing in, please email your administrator at '+ self.adminEmail+ '. Be sure to include a description of the problem, your username, the error message, and a screenshot.</p><p>For your reference, you can access the home page of the organization here: <br>http://'+self.urlKey +'.maps.arcgis.com/home/</p><p>This link will expire in two weeks.</p><p style="color:gray;">This is an automated email, please do not reply.</p></body></html>'
+
+            #send invitation without sending an email notification to user
+            invitationlist = '{"invitations":[{"username":"'+userName+'", "password":"Password123", "fullname":'+userFullName+',"email":"'+self.adminEmail+'","role":"' +roleID +'"}]}'
+            data={'subject':subject, 'html':text, 'invitationlist':invitationlist,'f':'json', 'token':self.token}
+            jres = requests.post(url, data=data, verify=False).json()
+            return 'success'
+        else:
+            return 'error: All invitations have been used'
+
+    #creates a Group
+    def createGroup(self, title, tags, description, access, viewOnly):
+        url = self.portalUrl+'.maps.arcgis.com/sharing/rest/community/createGroup'
+        data = {'title': title, 'tags':tags, 'description': description,'access': access, 'isViewOnly':viewOnly, 'f':'json', 'token':self.token}
+        jres = requests.post(url, data=data, verify = False).json()
+        return jres
+    #shares item with Group
+    def shareGroup(self, itemId, groupId):
+        url = self.portalUrl+'.maps.arcgis.com/sharing/rest/content/items/{}/share'.format(itemId)
+        data = {'groups':groupId, 'f':'json', 'token':self.token}
+        jres = requests.post(url, data=data, verify = False)
+    def addUserToGroup(self, userlist, groupId):
+        url = self.portalUrl+'.maps.arcgis.com/sharing/rest/community/groups/{}/addUsers'.format(groupId)
+        data ={'users':userlist, 'f':'json','token':self.token}
+        jres = requests.post(url, data=data, verify = False)
+
+    #sets feature group, but more parameters can be added
+    def updateOrgAdmin(self, groupId):
+        url = self.portalUrl+'.maps.arcgis.com/sharing/rest/portals/self/update'
+        data= {'homePageFeaturedContent':groupId,'f':'json', 'token':self.token}
+        jres = requests.post(url, data=data, verify = False)
+
+#-----------------------------------------------User analysis-----------------------------------------
+    def countFeatures(self, userName):
+       itemURL ='{}.maps.arcgis.com/sharing/rest/content/users/{}'.format(self.portalUrl, userName)
+       request = itemURL +"?f=json&token="+self.token
+       response = requests.get(request)
+       jres = json.loads(response.text)
+       num = 0
+       for item in jres['items']:
+             if item['type'] == 'Feature Service':
+               for x in item['typeKeywords']:
+                  if x=='Hosted Service':
+                       num +=1
+       return num
+
+    def userCredit(self,userName):
+        creds = 0
+        for item in self.creditDict['data']:
+            try:
+                if userName == item['username']:
+                    for x in item['credits']:
+                        creds += float(x[1])
+            except KeyError:
+                pass
+        return creds
+
 
 
