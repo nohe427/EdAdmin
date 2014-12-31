@@ -333,7 +333,7 @@ class agolAdmin(object):
 
         groupURL ='{}.maps.arcgis.com/sharing/rest/community/users/{}'.format(self.portalUrl, userName)
         request = groupURL +"?f=json&token="+self.token
-        response = requests.get(request)
+        response = requests.get(request, verify = False)
         jres = json.loads(response.text)
         for row in jres['groups']:
             if row['id'] != "" and row['owner'] == userName:
@@ -420,10 +420,19 @@ class agolAdmin(object):
         url = self.portalUrl+'.maps.arcgis.com/sharing/rest/content/items/{}/share'.format(itemId)
         data = {'groups':groupId, 'f':'json', 'token':self.token}
         jres = requests.post(url, data=data, verify = False)
+    #add User to Group
     def addUserToGroup(self, userlist, groupId):
         url = self.portalUrl+'.maps.arcgis.com/sharing/rest/community/groups/{}/addUsers'.format(groupId)
         data ={'users':userlist, 'f':'json','token':self.token}
         jres = requests.post(url, data=data, verify = False)
+    #list users in a group
+    def listGroupUsers(self, groupId):
+        url = self.portalUrl+'.maps.arcgis.com/sharing/rest/community/groups/{}/users'.format(groupId)
+        data ={'f':'json','token':self.token}
+        response = requests.post(url, data=data, verify = False)
+        jres = json.loads(response.text)
+
+        return jres['admins'], jres['owner'],jres['users']
 
     #sets feature group, but more parameters can be added
     def updateOrgAdmin(self, groupId):
@@ -435,7 +444,7 @@ class agolAdmin(object):
     def countFeatures(self, userName):
        itemURL ='{}.maps.arcgis.com/sharing/rest/content/users/{}'.format(self.portalUrl, userName)
        request = itemURL +"?f=json&token="+self.token
-       response = requests.get(request)
+       response = requests.get(request, verify = False )
        jres = json.loads(response.text)
        num = 0
        for item in jres['items']:

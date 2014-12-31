@@ -1,7 +1,6 @@
 #-------------------------------------------------------------------------------
-# Name:             Remove users from organizaiton based on role
-# Purpose:          Parse through users based on role and remove them from t
-#                   the organizaiton, including deleting all content and groups
+# Name:             Delete's a users content by inputting their username
+# Purpose:         input a users username and delete all of their content.
 #
 # Author:     Kelly Gerrow
 #

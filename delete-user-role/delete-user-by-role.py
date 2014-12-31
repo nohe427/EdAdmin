@@ -58,6 +58,6 @@ if __name__ == '__main__':
 
         #delete user from AGOL (will be able to reuse name)
         #uncomment if you want to actually remove username
-        #delUsers = t.delUser(item)
+        delUsers = t.delUser(item)
 
 
