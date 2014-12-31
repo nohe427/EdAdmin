@@ -23,7 +23,7 @@ class agolAdmin(object):
             self.__pref='http://'
         else:
             self.__pref='https://'
-        self.__urlKey, self.__id, self.__Name, self.__FullName, self.__Email, self.__maxUsers = self.__GetAccount()
+        self.__urlKey, self.__id, self.__Name, self.__FullName, self.__Email, self.__maxUsers, self.__availCredits = self.__GetAccount()
         self.__portalUrl = self.__pref+self.__urlKey
         self.__userDict = self.__userDictMethod()
         self.__roleDict = self.__roleDictMethod()
@@ -52,6 +52,9 @@ class agolAdmin(object):
     @property
     def fullName(self):
         return self.__FullName
+    @property
+    def availCredits(self):
+        return self.__availCredits
 
     @property
     def adminEmail(self):
@@ -95,7 +98,7 @@ class agolAdmin(object):
         URL= self.__pref+'www.arcgis.com/sharing/rest/portals/self?f=json&token=' + self.token
         response = requests.get(URL, verify=False)
         jres = json.loads(response.text)
-        return jres['urlKey'], jres['id'], jres['name'], jres['user']['fullName'], jres['user']['email'], jres['subscriptionInfo']['maxUsers']
+        return jres['urlKey'], jres['id'], jres['name'], jres['user']['fullName'], jres['user']['email'], jres['subscriptionInfo']['maxUsers'], jres['availableCredits']
 
     #creates dictionary of role names and corresponding IDs
     def __roleDictMethod(self):
@@ -150,8 +153,8 @@ class agolAdmin(object):
         return jres
 
     def __creditDictMethod(self):
-    #queries non -service based credits for the past month
-        startTime =int(time.time()) -2629743
+    #queries non -service based credits for the past day
+        startTime =int(time.time()) -86400
         EndTime = int(time.time())
         str_ST = str(startTime) + '000'
         str_ET =str(EndTime) + '000'
@@ -464,6 +467,35 @@ class agolAdmin(object):
             except KeyError:
                 pass
         return creds
+
+    def creditService(self):
+    #queries feature service and tiled generation based credits for the past day
+        startTime =int(time.time()) -86400
+        EndTime = int(time.time())
+        str_ST = str(startTime) + '000'
+        str_ET =str(EndTime) + '000'
+        creditURL =self.__pref+'www.arcgis.com/sharing/rest/portals/{}/usage?'.format(self.orgID)
+        request ="f=json&startTime="+str_ST+"&endTime="+str_ET+"&period=1d&vars=credits&groupby=stype,etype&token=" +self.token
+        req = creditURL+request
+        response = requests.get(req, verify = False)
+        jres = json.loads(response.text)
+
+        HFScreds = 0
+        tileGencreds = 0
+        for item in jres['data']:
+            try:
+                if item['etype'] =='svcusg' and item['stype']=='features':
+                    for x in item['credits']:
+                        HFScreds += float(x[1])
+                if item['etype'] =='tilegencnt' and item['stype']=='tiles':
+                    for x in item['credits']:
+                        tileGencreds += float(x[1])
+            except KeyError:
+                pass
+        hfscredRNd = round(HFScreds,2)
+        tilernd = round(tileGencreds,2)
+
+        return hfscredRNd, tilernd
 
 
 
