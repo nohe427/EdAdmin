@@ -265,6 +265,7 @@ class agolAdmin(object):
                         '''delete protected data'''
                         unprotectURL = '{}.maps.arcgis.com/sharing/rest/content/users/{}/items/{}/unprotect'.format(self.portalUrl,userName,itemID)
                         data = {'f':'json', 'token':self.token}
+                        resp = requests.post(unprotectURL, data=data, verify=false)
 
                         delURL = '{}.maps.arcgis.com/sharing/rest/content/users/{}/items/{}/delete'.format(self.portalUrl,userName,itemID)
                         try:

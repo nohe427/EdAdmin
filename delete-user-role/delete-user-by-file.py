@@ -41,10 +41,11 @@ if __name__ == '__main__':
 
     while True:
             line = readLine(openedfile)
-            print len(line)
-            if len(line) == 1:
+            print len(line[0])
+            if len(line[0]) < 1:
                 break
             else:
+
                #delete user content:
                 delCont = t.delUserContent(line[0])
 
@@ -53,6 +54,6 @@ if __name__ == '__main__':
 
 
                #delete user
-               #delUsers = t.delUser(line[0])
+                delUsers = t.delUser(line[0])
 
 
