@@ -33,7 +33,7 @@ if __name__ == '__main__':
     t = excalibur.agolAdmin(user, pw)
 
     #delete user content:
-    t.updateUser(userName,"","","","","","", passW)
+    t.updateUser(userName=userName,password=passW)
 
 
 
